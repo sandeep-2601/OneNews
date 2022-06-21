@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import NewsItem from './NewsItem';
-// import InfiniteScroll from 'react-infinite-scroll-component';
+import InfiniteScroll from 'react-infinite-scroll-component';
 
 export class News extends Component {
 
@@ -17,10 +17,8 @@ export class News extends Component {
   notFoundUrl = "https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg";
   sourceUrl = this.props.sourceUrl;
 
-  async updateNews(page) {
-    this.setState({
-      loading: true,
-    });
+  fetchData = async () => {
+    let page = this.state.page + 1;
     let topHeadLinesUrl = this.sourceUrl + page;
     let headlines = await fetch(topHeadLinesUrl);
     let parsedData = await headlines.json();
@@ -30,10 +28,10 @@ export class News extends Component {
     };
     this.setState({
       page: page,
-      articles: parsedData.articles,
-      loading: false
+      articles: this.state.articles.concat(parsedData.articles),
     });
   }
+
 
   isLastPage = () => {
     return (this.state.page + 1) > Math.ceil(this.state.totalResults / this.props.pageSize);
@@ -59,34 +57,28 @@ export class News extends Component {
 
   render() {
     return (
-
-      <div className="container my-4">
+      <div style={{marginTop:"5rem"}}>
+        {this.state.loading && <div className="loader">Loading...</div>}
         {!this.state.loading && <h1 className='text-dark text-center'>Found {this.state.totalResults} results for your search</h1>}
-        {/* <InfiniteScroll
+        <InfiniteScroll
           dataLength={this.state.articles.length}
-          next={this.updateNews(this.state.page + 1)}
-          hasMore={this.isLastPage}
-          loader={<div className="loader"></div>}
-          endMessage={
-            <p style={{ textAlign: 'center' }}>
-              <b>Yay! You have seen it all</b>
-            </p>
-          }> */}
-          <div class="text-center">
-            <div class="spinner-border" role="status">
-              <span class="sr-only"></span>
+          next={this.fetchData}
+          hasMore={this.state.articles.length !== this.state.totalResults}
+          loader={<div className="loader">Loading...</div>
+          }
+        >
+          <div className="container">
+            <div className="row mx-2">
+              {this.state.articles && this.state.articles.map((article) => {
+                return (
+                  <div className="col-md-4" key={article.url}>
+                    <NewsItem title={article.title} description={article.description !== null ? article.description : article.title} imageUrl={(article.urlToImage && article.urlToImage !== null) ? article.urlToImage : this.notFoundUrl} url={article.url} author={article.author ? article.author : "unknown"} date={article.publishedAt} source={article.source.name} />
+                  </div>
+                )
+              })}
             </div>
           </div>
-          <div className="row mx-2">
-            {this.state.articles && this.state.articles.map((article) => {
-              return (
-                <div className="col-md-4" key={article.url}>
-                  <NewsItem title={article.title} description={article.description !== null ? article.description : article.title} imageUrl={(article.urlToImage && article.urlToImage !== null) ? article.urlToImage : this.notFoundUrl} url={article.url} author={article.author ? article.author : "unknown"} date={article.publishedAt} source={article.source.name} />
-                </div>
-              )
-            })}
-          </div>
-        {/* </InfiniteScroll> */}
+        </InfiniteScroll>
       </div>
     )
   }
