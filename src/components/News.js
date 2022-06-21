@@ -1,10 +1,11 @@
 import React, { Component } from 'react'
 import NewsItem from './NewsItem';
+// import InfiniteScroll from 'react-infinite-scroll-component';
 
 export class News extends Component {
 
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
       articles: [],
       page: 1,
@@ -14,77 +15,78 @@ export class News extends Component {
   }
 
   notFoundUrl = "https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg";
-  topHeadLinesRootUrl = "https://newsapi.org/v2/top-headlines?country=us&category=business&apiKey=a5a9735cd7db472d8530cf37592545d6&pageSize=12&page=";
+  sourceUrl = this.props.sourceUrl;
 
-  handlePrevClick = async () => {
-    let page = this.state.page;
-    if (page === 1) return;
+  async updateNews(page) {
     this.setState({
-      loading: true
-    })
-    let topHeadLinesUrl = this.topHeadLinesRootUrl + page;
+      loading: true,
+    });
+    let topHeadLinesUrl = this.sourceUrl + page;
     let headlines = await fetch(topHeadLinesUrl);
     let parsedData = await headlines.json();
+    if (parsedData["status"] === "error") {
+      this.setState({ loading: false })
+      return;
+    };
     this.setState({
       page: page,
       articles: parsedData.articles,
       loading: false
     });
   }
+
   isLastPage = () => {
-    return (this.state.page + 1) > Math.ceil(this.state.totalResults / 12);
-  }
-
-  handleNextClick = async () => {
-    let page = this.state.page + 1;
-    if (this.isLastPage()) return;
-    this.setState({
-      loading: true
-    })
-    let topHeadLinesUrl = this.topHeadLinesRootUrl + page;
-    let headlines = await fetch(topHeadLinesUrl);
-    let parsedData = await headlines.json();
-    this.setState({
-      page: page,
-      articles: parsedData.articles,
-      loading: false
-    });
+    return (this.state.page + 1) > Math.ceil(this.state.totalResults / this.props.pageSize);
   }
 
   async componentDidMount() {
-    let topHeadLinesUrl = this.topHeadLinesRootUrl + this.state.page;
+    let topHeadLinesUrl = this.sourceUrl + this.state.page;
+    this.setState({
+      loading: true,
+    });
     let headlines = await fetch(topHeadLinesUrl);
     let parsedData = await headlines.json();
+    if (parsedData["status"] === "error") {
+      this.setState({ loading: false })
+      return;
+    };
     this.setState({
       articles: parsedData.articles,
       totalResults: parsedData.totalResults,
-      loading: true
+      loading: false
     });
   }
 
   render() {
-    let loader;
-    if (this.state.loading) {
-      console.log('loading enabled')
-      loader = <div className="lds-facebook"><div></div><div></div><div></div></div>
-    }
     return (
-      <div className="container my-4">
-        <div className="row mx-2">
-          {this.state.articles.map((article) => {
-            return (
-              <div className="col-md-4" key={article.url}>
-                <NewsItem title={article.title} description={article.description !== null ? article.description : article.title} imageUrl={article.urlToImage !== null ? article.urlToImage : this.notFoundUrl} url={article.url} />
-              </div>
-            )
-          })}
-        </div>
-        {loader}
-        <div className="d-flex justify-content-between">
-          <button className="btn btn-primary bg-dark" disabled={this.state.page === 1} onClick={this.handlePrevClick}>&larr; Prev</button>
-          <button className="btn btn-primary bg-dark" disabled={this.isLastPage()} onClick={this.handleNextClick}>Next &rarr;</button>
-        </ div>
 
+      <div className="container my-4">
+        {!this.state.loading && <h1 className='text-dark text-center'>Found {this.state.totalResults} results for your search</h1>}
+        {/* <InfiniteScroll
+          dataLength={this.state.articles.length}
+          next={this.updateNews(this.state.page + 1)}
+          hasMore={this.isLastPage}
+          loader={<div className="loader"></div>}
+          endMessage={
+            <p style={{ textAlign: 'center' }}>
+              <b>Yay! You have seen it all</b>
+            </p>
+          }> */}
+          <div class="text-center">
+            <div class="spinner-border" role="status">
+              <span class="sr-only"></span>
+            </div>
+          </div>
+          <div className="row mx-2">
+            {this.state.articles && this.state.articles.map((article) => {
+              return (
+                <div className="col-md-4" key={article.url}>
+                  <NewsItem title={article.title} description={article.description !== null ? article.description : article.title} imageUrl={(article.urlToImage && article.urlToImage !== null) ? article.urlToImage : this.notFoundUrl} url={article.url} author={article.author ? article.author : "unknown"} date={article.publishedAt} source={article.source.name} />
+                </div>
+              )
+            })}
+          </div>
+        {/* </InfiniteScroll> */}
       </div>
     )
   }
