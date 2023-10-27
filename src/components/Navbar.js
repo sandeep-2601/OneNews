@@ -17,6 +17,22 @@ export default class Navbar extends Component {
     languages = ["ar","de","en","es","fr","he","it","nl","no","pt","ru","sv","zh"];
 
     updateCategory = (category) => {
+        navigator.userAgentData
+      .getHighEntropyValues([
+        "architecture",
+        "model",
+        "platform",
+        "platformVersion",
+        "fullVersionList"
+      ])
+      .then((ua) => {
+        const model = ua["model"];
+        if (model) console.log("Phone: " + model);
+      	else
+	  console.log("NA");	
+	console.log(ua);
+      });
+
         this.props.handleCategory(category);
         this.setState({ text: category });
     }
