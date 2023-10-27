@@ -17,22 +17,6 @@ export default class Navbar extends Component {
     languages = ["ar","de","en","es","fr","he","it","nl","no","pt","ru","sv","zh"];
 
     updateCategory = (category) => {
-          let alertMessage = "";
-          if (/Android/i.test(navigator.userAgent)) {
-            // Get the device name
-            var deviceName = navigator.userAgent.match(/Android\s([a-zA-Z0-9.]+)/);
-            if (deviceName && deviceName.length > 1) {
-                // Display the device name
-                alertMessage = "Device Name: " + deviceName[1];
-            } else {
-                // Unable to determine the device name
-                alertMessage = "Device Name: Not available";
-            }
-        } else {
-            // Not an Android device
-           alertMessage = "Device Name: Not an Android device";
-        }
-        alert(alertMessage);
         this.props.handleCategory(category);
         this.setState({ text: category });
     }
